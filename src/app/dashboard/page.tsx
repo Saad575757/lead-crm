@@ -13,10 +13,7 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [leadsRes] = await Promise.all([
-          fetch('/api/leads'),
-        ]);
-
+        const leadsRes = await fetch('/api/leads');
         const leadsData = await leadsRes.json();
 
         if (leadsData.success) {
