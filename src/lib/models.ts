@@ -19,7 +19,7 @@ function formatLead(row: any): Lead {
 }
 
 export class LeadModel {
-  static async findAll(filters?: { status?: string; search?: string }): Promise<Lead[]> {
+  static async findAll(filters?: { status?: string; search?: string; date?: string }): Promise<Lead[]> {
     let sql = 'SELECT * FROM leads';
     const params: any[] = [];
     const conditions: string[] = [];
@@ -32,6 +32,11 @@ export class LeadModel {
     if (filters?.search) {
       conditions.push(`(name ILIKE $${params.length + 1} OR email ILIKE $${params.length + 1} OR phone ILIKE $${params.length + 1})`);
       params.push(`%${filters.search}%`);
+    }
+
+    if (filters?.date) {
+      conditions.push(`DATE(created_at) = $${params.length + 1}`);
+      params.push(filters.date);
     }
 
     if (conditions.length > 0) {

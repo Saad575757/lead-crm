@@ -11,6 +11,7 @@ export default function LeadsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
 
   useEffect(() => {
     fetchLeads();
@@ -22,6 +23,33 @@ export default function LeadsPage() {
       const params = new URLSearchParams();
       if (searchTerm) params.set('search', searchTerm);
       if (statusFilter) params.set('status', statusFilter);
+      if (dateFilter) params.set('date', dateFilter);
+
+      const response = await fetch(`/api/leads?${params.toString()}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setLeads(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching leads:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleDateFilter(date: string) {
+    setDateFilter(date);
+    fetchLeadsWithFilters(searchTerm, statusFilter, date);
+  }
+
+  async function fetchLeadsWithFilters(search: string, status: string, date: string) {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (status) params.set('status', status);
+      if (date) params.set('date', date);
 
       const response = await fetch(`/api/leads?${params.toString()}`);
       const data = await response.json();
@@ -66,12 +94,13 @@ export default function LeadsPage() {
         <SearchFilter
           onSearch={(search) => {
             setSearchTerm(search);
-            setTimeout(fetchLeads, 500);
+            fetchLeadsWithFilters(search, statusFilter, dateFilter);
           }}
           onStatusFilter={(status) => {
             setStatusFilter(status);
-            setTimeout(fetchLeads, 500);
+            fetchLeadsWithFilters(searchTerm, status, dateFilter);
           }}
+          onDateFilter={handleDateFilter}
           onRefresh={fetchLeads}
         />
 

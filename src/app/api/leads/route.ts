@@ -7,8 +7,9 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const search = searchParams.get('search') || undefined;
     const status = searchParams.get('status') || undefined;
+    const date = searchParams.get('date') || undefined;
 
-    const filters = { search, status };
+    const filters = { search, status, date };
     const leads = await LeadModel.findAll(filters);
 
     return NextResponse.json({ success: true, data: leads });
