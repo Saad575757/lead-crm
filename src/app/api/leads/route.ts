@@ -25,6 +25,25 @@ export async function POST(request: NextRequest) {
   try {
     const body: CreateLeadDTO = await request.json();
 
+    if (body.email !== undefined) {
+      const normalizedEmail = body.email.toString().trim();
+      if (normalizedEmail === '') {
+        delete body.email;
+      } else {
+        body.email = normalizedEmail;
+      }
+
+      if (body.email) {
+        const emailExists = await LeadModel.findByEmail(body.email);
+        if (emailExists) {
+          return NextResponse.json(
+            { success: false, error: 'A lead with this email already exists' },
+            { status: 409 }
+          );
+        }
+      }
+    }
+
     const lead = await LeadModel.create(body);
     return NextResponse.json({ success: true, data: lead }, { status: 201 });
   } catch (error) {

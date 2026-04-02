@@ -48,7 +48,10 @@ export default function LeadTable({ leads, onDelete }: LeadTableProps) {
               Email
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Phone
+              From
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              City/Region
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Status
@@ -68,7 +71,10 @@ export default function LeadTable({ leads, onDelete }: LeadTableProps) {
                 <div className="text-sm text-gray-900">{lead.email || '-'}</div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-500">{lead.phone || '-'}</div>
+                <div className="text-sm text-gray-500">{lead.from || '-'}</div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="text-sm text-gray-500">{lead.cityRegion || '-'}</div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <span className={`status-badge ${getStatusBadgeClass(lead.status)}`}>

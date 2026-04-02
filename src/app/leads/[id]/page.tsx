@@ -169,6 +169,14 @@ export default function LeadDetailPage() {
                     <dd className="mt-1 text-sm text-gray-900">{lead.phone || 'N/A'}</dd>
                   </div>
                   <div>
+                    <dt className="text-sm font-medium text-gray-500">From</dt>
+                    <dd className="mt-1 text-sm text-gray-900">{lead.from || 'N/A'}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">City/Region</dt>
+                    <dd className="mt-1 text-sm text-gray-900">{lead.cityRegion || 'N/A'}</dd>
+                  </div>
+                  <div>
                     <dt className="text-sm font-medium text-gray-500">Status</dt>
                     <dd className="mt-1">
                       <span className={`status-badge ${

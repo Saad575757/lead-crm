@@ -22,6 +22,8 @@ export default function LeadForm({ initialData, onSubmit, onCancel }: LeadFormPr
     name: initialData?.name || '',
     email: initialData?.email || '',
     phone: initialData?.phone || '',
+    from: initialData?.from || '',
+    cityRegion: initialData?.cityRegion || '',
     details: initialData?.details || '',
     status: initialData?.status || 'first_dm',
   });
@@ -104,6 +106,36 @@ export default function LeadForm({ initialData, onSubmit, onCancel }: LeadFormPr
             onChange={handleChange}
             className="input-field"
             placeholder="+1 (555) 123-4567"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="from" className="block text-sm font-medium text-gray-700 mb-1">
+            From
+          </label>
+          <input
+            type="text"
+            id="from"
+            name="from"
+            value={formData.from}
+            onChange={handleChange}
+            className="input-field"
+            placeholder="e.g. Instagram, Facebook, Referral"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="cityRegion" className="block text-sm font-medium text-gray-700 mb-1">
+            City/Region
+          </label>
+          <input
+            type="text"
+            id="cityRegion"
+            name="cityRegion"
+            value={formData.cityRegion}
+            onChange={handleChange}
+            className="input-field"
+            placeholder="e.g. New York, NY"
           />
         </div>
 

@@ -31,6 +31,8 @@ export async function initDB() {
       name VARCHAR(255),
       email VARCHAR(255),
       phone VARCHAR(50),
+      "from" VARCHAR(255),
+      city_region VARCHAR(255),
       details TEXT,
       status VARCHAR(50) DEFAULT 'first_dm',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -53,10 +55,16 @@ export async function initDB() {
     CREATE INDEX IF NOT EXISTS idx_activities_lead_id ON activities(lead_id);
   `;
 
+  const addNewColumns = `
+    ALTER TABLE leads ADD COLUMN IF NOT EXISTS "from" VARCHAR(255);
+    ALTER TABLE leads ADD COLUMN IF NOT EXISTS city_region VARCHAR(255);
+  `;
+
   try {
     await query(createLeadsTable);
     await query(createActivitiesTable);
     await query(createIndex);
+    await query(addNewColumns);
     console.log('Database tables created successfully');
   } catch (error) {
     console.error('Error creating database tables:', error);

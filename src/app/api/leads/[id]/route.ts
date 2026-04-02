@@ -65,9 +65,19 @@ export async function PUT(
       );
     }
 
+    // Normalize email before checking and updating
+    if (body.email !== undefined) {
+      const trimmedEmail = body.email.toString().trim();
+      if (trimmedEmail === '') {
+        delete body.email; // don't overwrite with empty string
+      } else {
+        body.email = trimmedEmail;
+      }
+    }
+
     // Check if email is being changed and if it already exists
     if (body.email && body.email !== existingLead.email) {
-      const emailExists = await LeadModel.findByEmail(body.email);
+      const emailExists = await LeadModel.findByEmail(body.email, leadId);
       if (emailExists) {
         return NextResponse.json(
           { success: false, error: 'A lead with this email already exists' },

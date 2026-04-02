@@ -3,6 +3,8 @@ export interface Lead {
   name: string;
   email: string;
   phone?: string;
+  from?: string;
+  cityRegion?: string;
   details?: string;
   status: LeadStatus;
   created_at: string;
@@ -25,6 +27,8 @@ export interface CreateLeadDTO {
   name?: string;
   email?: string;
   phone?: string;
+  from?: string;
+  cityRegion?: string;
   details?: string;
   status?: LeadStatus;
 }
@@ -33,6 +37,8 @@ export interface UpdateLeadDTO {
   name?: string;
   email?: string;
   phone?: string;
+  from?: string;
+  cityRegion?: string;
   details?: string;
   status?: LeadStatus;
 }

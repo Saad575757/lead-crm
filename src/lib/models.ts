@@ -1,6 +1,23 @@
 import { query } from './db';
 import { Lead, CreateLeadDTO, UpdateLeadDTO, Activity, CreateActivityDTO } from '@/types';
 
+function formatLead(row: any): Lead {
+  if (!row) return null as any;
+
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    phone: row.phone,
+    from: row.from,
+    cityRegion: row.city_region,
+    details: row.details,
+    status: row.status,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
 export class LeadModel {
   static async findAll(filters?: { status?: string; search?: string }): Promise<Lead[]> {
     let sql = 'SELECT * FROM leads';
@@ -24,17 +41,28 @@ export class LeadModel {
     sql += ' ORDER BY created_at DESC';
 
     const result = await query(sql, params);
-    return result.rows;
+    return result.rows.map(formatLead);
   }
 
   static async findById(id: number): Promise<Lead | null> {
     const result = await query('SELECT * FROM leads WHERE id = $1', [id]);
-    return result.rows[0] || null;
+    return formatLead(result.rows[0]);
   }
 
-  static async findByEmail(email: string): Promise<Lead | null> {
-    const result = await query('SELECT * FROM leads WHERE email = $1', [email]);
-    return result.rows[0] || null;
+  static async findByEmail(email?: string | null, excludeId?: number): Promise<Lead | null> {
+    if (!email) {
+      return null;
+    }
+
+    const params: any[] = [email];
+    let sql = 'SELECT * FROM leads WHERE email = $1';
+    if (excludeId !== undefined) {
+      sql += ' AND id != $2';
+      params.push(excludeId);
+    }
+
+    const result = await query(sql, params);
+    return formatLead(result.rows[0]);
   }
 
   static async create(data: CreateLeadDTO): Promise<Lead> {
@@ -42,18 +70,22 @@ export class LeadModel {
       name,
       email,
       phone,
+      from,
+      cityRegion,
       details,
       status = 'first_dm',
     } = data;
 
+    const normalizedEmail = email?.toString().trim() || null;
+
     const result = await query(
-      `INSERT INTO leads (name, email, phone, details, status)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO leads (name, email, phone, "from", city_region, details, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [name || null, email || null, phone || null, details || null, status]
+      [name || null, normalizedEmail, phone || null, from || null, cityRegion || null, details || null, status]
     );
 
-    return result.rows[0];
+    return formatLead(result.rows[0]);
   }
 
   static async update(id: number, data: UpdateLeadDTO): Promise<Lead | null> {
@@ -61,10 +93,27 @@ export class LeadModel {
     const params: any[] = [];
     let paramIndex = 1;
 
+    // Map of JS property names to SQL column names
+    const columnMap: Record<string, string> = {
+      cityRegion: 'city_region',
+      from: '"from"',  // Quote reserved keyword
+    };
+
     for (const [key, value] of Object.entries(data)) {
-      if (value !== undefined && value !== null) {
-        fields.push(`${key} = $${paramIndex}`);
-        params.push(value);
+      let normalizedValue = value;
+
+      if (typeof value === 'string') {
+        normalizedValue = value.trim();
+      }
+
+      if (key === 'email' && normalizedValue === '') {
+        normalizedValue = null; // Normalize empty email to null to avoid unique index collision on empty string.
+      }
+
+      if (normalizedValue !== undefined) {
+        const columnName = columnMap[key] || key;
+        fields.push(`${columnName} = $${paramIndex}`);
+        params.push(normalizedValue);
         paramIndex++;
       }
     }
@@ -81,7 +130,7 @@ export class LeadModel {
       params
     );
 
-    return result.rows[0] || null;
+    return formatLead(result.rows[0]);
   }
 
   static async delete(id: number): Promise<boolean> {
