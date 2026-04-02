@@ -9,6 +9,7 @@ export default function Navbar() {
   const navItems = [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/leads', label: 'Leads' },
+    { href: '/messages', label: 'Messages' },
   ];
 
   return (
