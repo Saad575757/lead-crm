@@ -6,6 +6,7 @@ interface CSVUploadResult {
   success: number;
   failed: number;
   errors: string[];
+  importedLeads?: Array<{ name: string; phone: string }>;
 }
 
 interface CSVUploadProps {
@@ -19,6 +20,8 @@ export default function CSVUpload({ onImportComplete, onCancel }: CSVUploadProps
   const [result, setResult] = useState<CSVUploadResult | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importedLeads, setImportedLeads] = useState<Array<{ name: string; phone: string }>>([]);
+  const [sendingWhatsApp, setSendingWhatsApp] = useState(false);
 
   function handleFileSelect(selectedFile: File) {
     const validExtensions = ['.csv', '.xls', '.xlsx'];
@@ -78,6 +81,7 @@ export default function CSVUpload({ onImportComplete, onCancel }: CSVUploadProps
 
       if (data.success) {
         setResult(data.data);
+        setImportedLeads(data.data.importedLeads || []);
         onImportComplete?.(data.data);
       } else {
         alert(data.error || 'Failed to import CSV');
@@ -93,9 +97,38 @@ export default function CSVUpload({ onImportComplete, onCancel }: CSVUploadProps
   function handleReset() {
     setFile(null);
     setResult(null);
+    setImportedLeads([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  }
+
+  async function handleSendWhatsAppToAll() {
+    const leadsWithPhone = importedLeads.filter(lead => lead.phone);
+    if (leadsWithPhone.length === 0) {
+      alert('No phone numbers available to send WhatsApp messages');
+      return;
+    }
+
+    setSendingWhatsApp(true);
+    
+    // Send WhatsApp messages with a small delay between each
+    for (const lead of leadsWithPhone) {
+      const phone = lead.phone.replace(/\D/g, '');
+      const message = `Hi ${lead.name}! 👋
+Your business looks amazing, and I noticed it doesn't have a website yet. A simple website can help you reach more customers and make your services easier to find online.
+If you want, I can put together a small demo showing how it could look.`;
+      
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
+      
+      window.open(whatsappUrl, '_blank');
+      
+      // Small delay between opening WhatsApp links
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    setSendingWhatsApp(false);
   }
 
   if (result) {
@@ -125,6 +158,24 @@ export default function CSVUpload({ onImportComplete, onCancel }: CSVUploadProps
                 ))}
               </ul>
             </div>
+          </div>
+        )}
+
+        {importedLeads.length > 0 && (
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800 font-medium mb-2">
+              📱 Send WhatsApp Messages
+            </p>
+            <p className="text-xs text-blue-700 mb-3">
+              You can send WhatsApp messages to all imported leads with phone numbers.
+            </p>
+            <button
+              onClick={handleSendWhatsAppToAll}
+              disabled={sendingWhatsApp}
+              className="btn-primary bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {sendingWhatsApp ? 'Sending...' : `Send WhatsApp to ${importedLeads.length} Leads`}
+            </button>
           </div>
         )}
 

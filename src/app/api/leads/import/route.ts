@@ -132,6 +132,7 @@ export async function POST(request: NextRequest) {
       success: 0,
       failed: 0,
       errors: [] as string[],
+      importedLeads: [] as Array<{ name: string; phone: string }>,
     };
 
     // Process each data row - ONLY extract Name and Phone (skip header row at index 0)
@@ -193,6 +194,14 @@ export async function POST(request: NextRequest) {
 
         await LeadModel.create(leadData);
         results.success++;
+        
+        // Track imported lead for WhatsApp messaging
+        if (leadData.name && leadData.phone) {
+          results.importedLeads.push({
+            name: leadData.name,
+            phone: leadData.phone,
+          });
+        }
       } catch (error: any) {
         results.failed++;
         results.errors.push(`Row ${i + 1}: ${error.message || 'Unknown error'}`);

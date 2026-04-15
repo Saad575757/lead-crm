@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Lead } from '@/types';
+import WhatsAppMessage from './WhatsAppMessage';
 
 interface LeadTableProps {
   leads: Lead[];
@@ -88,20 +89,29 @@ export default function LeadTable({ leads, onDelete }: LeadTableProps) {
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <Link
-                  href={`/leads/${lead.id}`}
-                  className="text-primary-600 hover:text-primary-900 mr-3"
-                >
-                  View
-                </Link>
-                {onDelete && (
-                  <button
-                    onClick={() => onDelete(lead.id)}
-                    className="text-red-600 hover:text-red-900"
+                <div className="flex items-center justify-end gap-2">
+                  {lead.phone && (
+                    <WhatsAppMessage
+                      phone={lead.phone}
+                      businessName={lead.name || 'there'}
+                      size="sm"
+                    />
+                  )}
+                  <Link
+                    href={`/leads/${lead.id}`}
+                    className="text-primary-600 hover:text-primary-900"
                   >
-                    Delete
-                  </button>
-                )}
+                    View
+                  </Link>
+                  {onDelete && (
+                    <button
+                      onClick={() => onDelete(lead.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
               </td>
             </tr>
           ))}
