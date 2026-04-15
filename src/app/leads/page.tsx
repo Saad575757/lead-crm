@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import LeadTable from '@/components/LeadTable';
 import SearchFilter from '@/components/SearchFilter';
+import CSVUpload from '@/components/CSVUpload';
 import { Lead } from '@/types';
 
 export default function LeadsPage() {
@@ -12,6 +13,7 @@ export default function LeadsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
+  const [showImport, setShowImport] = useState(false);
 
   useEffect(() => {
     fetchLeads();
@@ -82,14 +84,74 @@ export default function LeadsPage() {
     }
   }
 
+  function handleImportComplete(result: { success: number }) {
+    if (result.success > 0) {
+      fetchLeads();
+    }
+  }
+
+  async function handleDeleteAll() {
+    if (leads.length === 0) {
+      alert('No leads to delete');
+      return;
+    }
+
+    const confirmed = confirm(
+      `Are you sure you want to delete ALL ${leads.length} leads? This action cannot be undone!`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch('/api/leads/delete-all', { method: 'DELETE' });
+      const data = await response.json();
+
+      if (data.success) {
+        setLeads([]);
+        alert(`Successfully deleted ${data.data.deletedCount} leads`);
+      } else {
+        alert('Failed to delete all leads');
+      }
+    } catch (error) {
+      console.error('Error deleting all leads:', error);
+      alert('Failed to delete all leads');
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Leads</h1>
-          <p className="text-gray-600 mt-1">Manage and track your leads</p>
+        <div className="flex justify-between items-start mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Leads</h1>
+            <p className="text-gray-600 mt-1">Manage and track your leads</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowImport(!showImport)}
+              className="btn-secondary"
+            >
+              {showImport ? 'Cancel Import' : 'Import CSV'}
+            </button>
+            <button
+              onClick={handleDeleteAll}
+              className="btn-danger"
+              disabled={leads.length === 0}
+            >
+              Delete All
+            </button>
+          </div>
         </div>
+
+        {showImport && (
+          <div className="mb-8">
+            <CSVUpload
+              onImportComplete={handleImportComplete}
+              onCancel={() => setShowImport(false)}
+            />
+          </div>
+        )}
 
         <SearchFilter
           onSearch={(search) => {
