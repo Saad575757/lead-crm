@@ -3,50 +3,6 @@ import { LeadModel } from '@/lib/models';
 import { CreateLeadDTO } from '@/types';
 import * as XLSX from 'xlsx';
 
-// Detect delimiter (comma, tab, or semicolon)
-function detectDelimiter(line: string): string {
-  if (line.includes('\t')) return '\t';
-  if (line.includes(';')) return ';';
-  return ',';
-}
-
-// Proper CSV/TSV parser that handles quoted fields
-function parseCSVLine(line: string, delimiter: string = ','): string[] {
-  const result: string[] = [];
-  let current = '';
-  let inQuotes = false;
-  let i = 0;
-
-  while (i < line.length) {
-    const char = line[i];
-
-    if (char === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        // Escaped quote
-        current += '"';
-        i += 2;
-      } else {
-        // Toggle quotes
-        inQuotes = !inQuotes;
-        i++;
-      }
-    } else if (char === delimiter && !inQuotes) {
-      // End of field
-      result.push(current.trim());
-      current = '';
-      i++;
-    } else {
-      current += char;
-      i++;
-    }
-  }
-
-  // Add last field
-  result.push(current.trim());
-
-  return result;
-}
-
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -83,19 +39,20 @@ export async function POST(request: NextRequest) {
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as string[][];
       rows = jsonData;
     } else {
-      // Parse CSV file
-      const text = await file.text();
-      const lines = text.split('\n').filter(line => line.trim());
-      
-      if (lines.length < 2) {
+      // Convert CSV to workbook and parse like Excel
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const workbook = XLSX.read(buffer, { type: 'buffer' });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as string[][];
+      rows = jsonData;
+
+      if (rows.length < 2) {
         return NextResponse.json(
           { success: false, error: 'CSV file is empty or has no data rows' },
           { status: 400 }
         );
       }
-
-      const delimiter = detectDelimiter(lines[0]);
-      rows = lines.map(line => parseCSVLine(line, delimiter));
     }
 
     if (rows.length < 2) {

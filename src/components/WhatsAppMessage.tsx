@@ -14,7 +14,10 @@ export default function WhatsAppMessage({ phone, businessName, size = 'md' }: Wh
 
   const defaultMessage = `Hi ${businessName}! 👋
 Your business looks amazing, and I noticed it doesn't have a website yet. A simple website can help you reach more customers and make your services easier to find online.
-If you want, I can put together a small demo showing how it could look.`;
+If you want, I can put together a small demo showing how it could look.
+
+Website: https://muhammad-saad-khan-dev.vercel.app/
+Email: muhammadsaadprofessional@gmail.com`;
 
   const [message, setMessage] = useState(defaultMessage);
 
@@ -61,7 +64,7 @@ If you want, I can put together a small demo showing how it could look.`;
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none text-[#333] text-sm"
             rows={6}
             placeholder="Type your message here..."
           />
