@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { sendWhatsApp } from '@/lib/whatsapp';
 
 interface WhatsAppMessageProps {
   phone: string;
@@ -21,9 +20,30 @@ Email: muhammadsaadprofessional@gmail.com`;
 
   const [message, setMessage] = useState(defaultMessage);
 
-  function handleSend() {
-    sendWhatsApp(phone, message);
-    setIsOpen(false);
+  async function handleSend() {
+    try {
+      const response = await fetch('/api/whatsapp/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone: phone,
+          message: message,
+        }),
+      });
+
+      if (response.ok) {
+        alert('Message sent successfully!');
+        setIsOpen(false);
+      } else {
+        const error = await response.json();
+        alert(`Failed to send message: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert('Failed to send message. Please try again.');
+    }
   }
 
   const sizeClasses = size === 'sm' ? 'p-1.5' : 'p-2';

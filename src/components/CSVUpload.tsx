@@ -104,32 +104,59 @@ export default function CSVUpload({ onImportComplete, onCancel }: CSVUploadProps
   }
 
   async function handleSendWhatsAppToAll() {
-    const leadsWithPhone = importedLeads.filter(lead => lead.phone);
-    if (leadsWithPhone.length === 0) {
-      alert('No phone numbers available to send WhatsApp messages');
-      return;
-    }
+  const leadsWithPhone = importedLeads.filter((lead) => lead.phone);
 
-    setSendingWhatsApp(true);
-    
-    // Send WhatsApp messages with a small delay between each
+  if (leadsWithPhone.length === 0) {
+    alert('No phone numbers available to send WhatsApp messages');
+    return;
+  }
+
+  setSendingWhatsApp(true);
+
+  let successCount = 0;
+  let failCount = 0;
+
+  try {
     for (const lead of leadsWithPhone) {
       const phone = lead.phone.replace(/\D/g, '');
+
       const message = `Hi ${lead.name}! 👋
 Your business looks amazing, and I noticed it doesn't have a website yet. A simple website can help you reach more customers and make your services easier to find online.
-If you want, I can put together a small demo showing how it could look.`;
-      
-      const encodedMessage = encodeURIComponent(message);
-      const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
-      
-      window.open(whatsappUrl, '_blank');
-      
-      // Small delay between opening WhatsApp links
-      await new Promise(resolve => setTimeout(resolve, 1000));
+I can also put together a small demo showing how it could look.
+
+Website: https://muhammad-saad-khan-dev.vercel.app/
+Email: muhammadsaadprofessional@gmail.com`;
+
+      const response = await fetch('/api/whatsapp/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phone, message }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        successCount++;
+        console.log(`Message sent to ${lead.name} (${phone})`);
+      } else {
+        failCount++;
+        console.error(`Failed to send to ${lead.name} (${phone}):`, data.error);
+      }
+
+      // Small delay between sends
+      await new Promise((resolve) => setTimeout(resolve, 1500));
     }
-    
+
+    alert(`Done. Sent: ${successCount}, Failed: ${failCount}`);
+  } catch (error) {
+    console.error('Error sending WhatsApp messages:', error);
+    alert('Something went wrong while sending WhatsApp messages');
+  } finally {
     setSendingWhatsApp(false);
   }
+}
 
   if (result) {
     return (
