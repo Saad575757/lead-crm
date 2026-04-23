@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import LeadTable from '@/components/LeadTable';
 import SearchFilter from '@/components/SearchFilter';
 import CSVUpload from '@/components/CSVUpload';
+import BulkWhatsAppMessage from '@/components/BulkWhatsAppMessage';
 import { Lead } from '@/types';
 
 export default function LeadsPage() {
@@ -14,6 +15,7 @@ export default function LeadsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [showImport, setShowImport] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   useEffect(() => {
     fetchLeads();
@@ -58,6 +60,8 @@ export default function LeadsPage() {
 
       if (data.success) {
         setLeads(data.data);
+        // Clear selection when filters change as the visible leads change
+        setSelectedIds([]);
       }
     } catch (error) {
       console.error('Error fetching leads:', error);
@@ -75,12 +79,45 @@ export default function LeadsPage() {
 
       if (data.success) {
         setLeads(leads.filter((lead) => lead.id !== id));
+        setSelectedIds(selectedIds.filter(sid => sid !== id));
       } else {
         alert('Failed to delete lead');
       }
     } catch (error) {
       console.error('Error deleting lead:', error);
       alert('Failed to delete lead');
+    }
+  }
+
+  async function handleDeleteSelected() {
+    if (selectedIds.length === 0) return;
+
+    if (!confirm(`Are you sure you want to delete ${selectedIds.length} selected leads?`)) return;
+
+    try {
+      // We could add a bulk delete API, but for now we'll delete them one by one or 
+      // check if there's a bulk delete route. The existing delete-all is for ALL.
+      // Let's assume we might need a new API or just loop for now.
+      // Better to check if we have a bulk delete API.
+      
+      const results = await Promise.all(
+        selectedIds.map(id => fetch(`/api/leads/${id}`, { method: 'DELETE' }).then(r => r.json()))
+      );
+
+      const successCount = results.filter(r => r.success).length;
+      
+      if (successCount > 0) {
+        setLeads(leads.filter(lead => !selectedIds.includes(lead.id)));
+        setSelectedIds([]);
+        if (successCount < selectedIds.length) {
+          alert(`Deleted ${successCount} out of ${selectedIds.length} leads. Some failed.`);
+        }
+      } else {
+        alert('Failed to delete selected leads');
+      }
+    } catch (error) {
+      console.error('Error deleting selected leads:', error);
+      alert('Failed to delete selected leads');
     }
   }
 
@@ -108,6 +145,7 @@ export default function LeadsPage() {
 
       if (data.success) {
         setLeads([]);
+        setSelectedIds([]);
         alert(`Successfully deleted ${data.data.deletedCount} leads`);
       } else {
         alert('Failed to delete all leads');
@@ -128,6 +166,20 @@ export default function LeadsPage() {
             <p className="text-gray-600 mt-1">Manage and track your leads</p>
           </div>
           <div className="flex gap-2">
+            {selectedIds.length > 0 && (
+              <>
+                <BulkWhatsAppMessage 
+                  selectedLeads={leads.filter(lead => selectedIds.includes(lead.id))} 
+                  onComplete={() => setSelectedIds([])}
+                />
+                <button
+                  onClick={handleDeleteSelected}
+                  className="btn-danger bg-red-100 !text-red-700 hover:bg-red-200 border-none"
+                >
+                  Delete Selected ({selectedIds.length})
+                </button>
+              </>
+            )}
             <button
               onClick={() => setShowImport(!showImport)}
               className="btn-secondary"
@@ -173,7 +225,12 @@ export default function LeadsPage() {
           </div>
         ) : (
           <div className="card">
-            <LeadTable leads={leads} onDelete={handleDelete} />
+            <LeadTable 
+              leads={leads} 
+              onDelete={handleDelete}
+              selectedIds={selectedIds}
+              onSelectionChange={setSelectedIds}
+            />
           </div>
         )}
       </main>

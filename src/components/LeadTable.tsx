@@ -5,6 +5,8 @@ import WhatsAppMessage from './WhatsAppMessage';
 interface LeadTableProps {
   leads: Lead[];
   onDelete?: (id: number) => void;
+  selectedIds?: number[];
+  onSelectionChange?: (ids: number[]) => void;
 }
 
 function getStatusBadgeClass(status: string): string {
@@ -25,7 +27,12 @@ function getStatusLabel(status: string): string {
   return labelMap[status] || status;
 }
 
-export default function LeadTable({ leads, onDelete }: LeadTableProps) {
+export default function LeadTable({ 
+  leads, 
+  onDelete, 
+  selectedIds = [], 
+  onSelectionChange 
+}: LeadTableProps) {
   if (leads.length === 0) {
     return (
       <div className="text-center py-12">
@@ -37,11 +44,47 @@ export default function LeadTable({ leads, onDelete }: LeadTableProps) {
     );
   }
 
+  const showSelection = !!onSelectionChange;
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!onSelectionChange) return;
+    if (e.target.checked) {
+      onSelectionChange(leads.map((lead) => lead.id));
+    } else {
+      onSelectionChange([]);
+    }
+  };
+
+  const handleSelectOne = (id: number) => {
+    if (!onSelectionChange) return;
+    if (selectedIds.includes(id)) {
+      onSelectionChange(selectedIds.filter((sid) => sid !== id));
+    } else {
+      onSelectionChange([...selectedIds, id]);
+    }
+  };
+
+  const allSelected = leads.length > 0 && selectedIds.length === leads.length;
+  const someSelected = selectedIds.length > 0 && selectedIds.length < leads.length;
+
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
+            {showSelection && (
+              <th className="px-6 py-3 text-left w-10">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded cursor-pointer"
+                  checked={allSelected}
+                  ref={(input) => {
+                    if (input) input.indeterminate = someSelected;
+                  }}
+                  onChange={handleSelectAll}
+                />
+              </th>
+            )}
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Name
             </th>
@@ -67,7 +110,17 @@ export default function LeadTable({ leads, onDelete }: LeadTableProps) {
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {leads.map((lead) => (
-            <tr key={lead.id} className="hover:bg-gray-50">
+            <tr key={lead.id} className={`hover:bg-gray-50 ${selectedIds.includes(lead.id) ? 'bg-primary-50' : ''}`}>
+              {showSelection && (
+                <td className="px-6 py-4 whitespace-nowrap w-10">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded cursor-pointer"
+                    checked={selectedIds.includes(lead.id)}
+                    onChange={() => handleSelectOne(lead.id)}
+                  />
+                </td>
+              )}
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm font-medium text-gray-900">{lead.name || '-'}</div>
               </td>

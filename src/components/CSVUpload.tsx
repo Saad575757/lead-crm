@@ -120,7 +120,7 @@ export default function CSVUpload({ onImportComplete, onCancel }: CSVUploadProps
     for (const lead of leadsWithPhone) {
       const phone = lead.phone.replace(/\D/g, '');
 
-      const message = `Hi ${lead.name}! 👋
+      const message = `Hi👋
 Your business looks amazing, and I noticed it doesn't have a website yet. A simple website can help you reach more customers and make your services easier to find online.
 I can also put together a small demo showing how it could look.
 
