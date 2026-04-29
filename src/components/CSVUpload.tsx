@@ -22,6 +22,40 @@ export default function CSVUpload({ onImportComplete, onCancel }: CSVUploadProps
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importedLeads, setImportedLeads] = useState<Array<{ name: string; phone: string }>>([]);
   const [sendingWhatsApp, setSendingWhatsApp] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('law');
+  const [progress, setProgress] = useState(0); // State for progress percentage
+  const [successCount, setSuccessCount] = useState(0); // Tracks the number of successful sends
+  const [failCount, setFailCount] = useState(0); // Tracks the number of failed sends
+
+  const messageTemplates = [
+    {
+      id: 'law',
+      label: 'Law Professional',
+      template: `Hi👋 {{name}}!👋
+
+Your business looks amazing, and I noticed it doesn’t have a website yet. A professional website can help you reach more clients and make your services easier to find online.
+
+To give you an idea of what your online presence could look like, here are some demo websites tailored for law professionals:
+
+https://templatekit.kitprostudio.com/justica/
+https://demo.themedraft.net/wp/ukilvai/
+https://elementorpress.com/lawfinity/
+https://kits.roxthemes.com/lexora/
+https://htmldesigntemplates.com/lawberg/?elementor_library=home/
+https://ronie.foxcreation.net/relawy/
+
+If you'd like, I can create a custom demo tailored specifically to your business. Just let me know!`,
+    },
+    {
+      id: 'business',
+      label: 'General Business',
+      template: `Hi👋 {{name}}!👋
+
+Your business looks amazing, and I noticed it doesn’t have a website yet. A simple website can help you reach more customers and make your services easier to find online.
+
+If you want, I can put together a small demo showing how it could look.`,
+    },
+  ];
 
   function handleFileSelect(selectedFile: File) {
     const validExtensions = ['.csv', '.xls', '.xlsx'];
@@ -104,30 +138,28 @@ export default function CSVUpload({ onImportComplete, onCancel }: CSVUploadProps
   }
 
   async function handleSendWhatsAppToAll() {
-  const leadsWithPhone = importedLeads.filter((lead) => lead.phone);
+    const leadsWithPhone = importedLeads.filter((lead) => lead.phone);
 
-  if (leadsWithPhone.length === 0) {
-    alert('No phone numbers available to send WhatsApp messages');
-    return;
-  }
+    if (leadsWithPhone.length === 0) {
+      alert('No phone numbers available to send WhatsApp messages');
+      return;
+    }
 
-  setSendingWhatsApp(true);
+    setSendingWhatsApp(true);
 
-  let successCount = 0;
-  let failCount = 0;
+    let success = 0;
+    let fail = 0;
 
-  try {
-    for (const lead of leadsWithPhone) {
-      const phone = lead.phone.replace(/\D/g, '');
+    const selectedTemplate = messageTemplates.find((template) => template.id === selectedTemplateId) ?? messageTemplates[0];
 
-      const message = `Hi👋
-Your business looks amazing, and I noticed it doesn't have a website yet. A simple website can help you reach more customers and make your services easier to find online.
-I can also put together a small demo showing how it could look.
+    try {
+      for (let i = 0; i < leadsWithPhone.length; i++) {
+        const lead = leadsWithPhone[i];
+        const phone = lead.phone.replace(/\D/g, '');
+        const leadName = lead.name || 'there';
+        const message = selectedTemplate.template.replace(/\{\{name\}\}/g, leadName);
 
-Website: https://muhammad-saad-khan-dev.vercel.app/
-Email: muhammadsaadprofessional@gmail.com`;
-
-      const response = await fetch('/api/whatsapp/send', {
+        const response = await fetch('/api/whatsapp/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -138,18 +170,22 @@ Email: muhammadsaadprofessional@gmail.com`;
       const data = await response.json();
 
       if (response.ok && data.success) {
-        successCount++;
-        console.log(`Message sent to ${lead.name} (${phone})`);
+        success++;
+        setSuccessCount(success); // Update success count
       } else {
-        failCount++;
-        console.error(`Failed to send to ${lead.name} (${phone}):`, data.error);
+        fail++;
+        setFailCount(fail); // Update fail count
       }
 
-      // Small delay between sends
+      // Update progress based on the current index
+      const currentProgress = Math.round(((i + 1) / leadsWithPhone.length) * 100);
+      setProgress(currentProgress); // Update progress bar
+
+      // Add delay between sends
       await new Promise((resolve) => setTimeout(resolve, 1500));
     }
 
-    alert(`Done. Sent: ${successCount}, Failed: ${failCount}`);
+    alert(`Done. Sent: ${success}, Failed: ${fail}`);
   } catch (error) {
     console.error('Error sending WhatsApp messages:', error);
     alert('Something went wrong while sending WhatsApp messages');
@@ -194,8 +230,25 @@ Email: muhammadsaadprofessional@gmail.com`;
               📱 Send WhatsApp Messages
             </p>
             <p className="text-xs text-blue-700 mb-3">
-              You can send WhatsApp messages to all imported leads with phone numbers.
+              Choose the message template you want to use for the selected leads.
             </p>
+            <div className="mb-4">
+              <label htmlFor="message-template" className="text-sm font-medium text-gray-700 block mb-2">
+                Message template
+              </label>
+              <select
+                id="message-template"
+                value={selectedTemplateId}
+                onChange={(e) => setSelectedTemplateId(e.target.value)}
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                {messageTemplates.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.label}
+                  </option>
+                ))}
+              </select>
+            </div>
             <button
               onClick={handleSendWhatsAppToAll}
               disabled={sendingWhatsApp}
@@ -205,6 +258,31 @@ Email: muhammadsaadprofessional@gmail.com`;
             </button>
           </div>
         )}
+        {sendingWhatsApp && (
+  <div style={{ marginTop: '16px', textAlign: 'center' }}>
+    <p style={{ marginBottom: '8px', fontSize: '14px' }}>
+      Sending messages... {successCount} Sent, {failCount} Failed
+    </p>
+    <div style={{
+      width: '100%',
+      height: '10px',
+      backgroundColor: '#f3f4f6',
+      borderRadius: '5px',
+      marginBottom: '8px'
+    }}>
+      <div
+        className="progress"
+        style={{
+          height: '100%',
+          backgroundColor: '#4caf50', // Green color for progress
+          borderRadius: '5px',
+          width: `${progress}%`,
+          transition: 'width 0.3s ease-in-out'
+        }}
+      ></div>
+    </div>
+  </div>
+)}
 
         <div className="flex gap-2">
           <button

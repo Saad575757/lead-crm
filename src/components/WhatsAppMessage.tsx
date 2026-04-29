@@ -11,12 +11,13 @@ interface WhatsAppMessageProps {
 export default function WhatsAppMessage({ phone, businessName, size = 'md' }: WhatsAppMessageProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const defaultMessage = `Hi👋
+  const defaultMessage = `Hi👋 ${businessName}! 👋
 Your business looks amazing, and I noticed it doesn't have a website yet. A simple website can help you reach more customers and make your services easier to find online.
 If you want, I can put together a small demo showing how it could look.
 
 Website: https://muhammad-saad-khan-dev.vercel.app/
-Email: muhammadsaadprofessional@gmail.com`;
+Email: muhammadsaadprofessional@gmail.com
+Linkedin: https://www.linkedin.com/in/saad-khan-958667255/`;
 
   const [message, setMessage] = useState(defaultMessage);
 

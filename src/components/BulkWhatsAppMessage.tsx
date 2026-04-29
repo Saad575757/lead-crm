@@ -13,12 +13,13 @@ export default function BulkWhatsAppMessage({ selectedLeads, onComplete }: BulkW
   const [isSending, setIsSending] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  const defaultMessage = `Hi👋
+  const defaultMessage = `Hi👋 {{name}}! 👋
 Your business looks amazing, and I noticed it doesn't have a website yet. A simple website can help you reach more customers and make your services easier to find online.
 If you want, I can put together a small demo showing how it could look.
 
 Website: https://muhammad-saad-khan-dev.vercel.app/
-Email: muhammadsaadprofessional@gmail.com`;
+Email: muhammadsaadprofessional@gmail.com
+Linkedin: https://www.linkedin.com/in/saad-khan-958667255/`;
 
   const [message, setMessage] = useState(defaultMessage);
 
